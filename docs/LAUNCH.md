@@ -73,7 +73,7 @@ zpls serve --node-id worker.local --endpoint http://127.0.0.1:8787/.well-known/z
 Use this phrase:
 
 ```text
-ZPL-S is an experimental protocol kernel for the AI-machine internet.
+ZPL-S is a protocol kernel for the AI-machine internet.
 ```
 
 Do not claim:
@@ -99,7 +99,7 @@ Not AGI. Not quantum hype. A real protocol kernel you can run today.
 ## Suggested GitHub Description
 
 ```text
-Experimental AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC seals, HTTP fabric and conformance tests.
+AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC seals, HTTP fabric and conformance tests.
 ```
 
 ## Suggested Topics

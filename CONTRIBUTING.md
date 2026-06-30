@@ -1,7 +1,7 @@
 # Contributing
 
-ZPL-S is experimental protocol infrastructure. Contributions should keep the
-protocol deterministic, compact and testable.
+ZPL-S is protocol infrastructure. Contributions should keep the protocol
+deterministic, compact and testable.
 
 ## Ground Rules
 

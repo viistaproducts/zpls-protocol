@@ -1,12 +1,12 @@
 # ZPL-S Protocol
 
-![status](https://img.shields.io/badge/status-experimental-orange)
+![status](https://img.shields.io/badge/status-protocol%20kernel-blue)
 ![python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![protocol](https://img.shields.io/badge/protocol-ZPL--S%20S1-black)
 ![license](https://img.shields.io/badge/license-Apache--2.0-green)
 
-Experimental AI-machine internet protocol: canonical state frames, Q-matrix
-logic, HMAC seals, HTTP Fabric and conformance tests.
+AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC
+seals, HTTP Fabric and conformance tests.
 
 ZPL-S ist ein kompaktes, deterministisches Protokoll fuer die Kommunikation
 zwischen KI-Systemen, Agenten und Maschinen. Es ist keine Chat-Sprache.

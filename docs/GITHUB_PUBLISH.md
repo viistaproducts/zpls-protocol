@@ -12,13 +12,13 @@ Recommended: `zpls-protocol`
 ## Short Description
 
 ```text
-Experimental AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC seals, HTTP fabric and conformance tests.
+AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC seals, HTTP fabric and conformance tests.
 ```
 
 ## README Badge Ideas
 
 ```markdown
-![status](https://img.shields.io/badge/status-experimental-orange)
+![status](https://img.shields.io/badge/status-protocol%20kernel-blue)
 ![python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![protocol](https://img.shields.io/badge/protocol-ZPL--S%20S1-black)
 ```
@@ -26,7 +26,7 @@ Experimental AI-machine internet protocol: canonical state frames, Q-matrix logi
 ## Suggested First Post
 
 ```text
-I built an experimental protocol kernel for the AI-machine internet.
+I built a protocol kernel for the AI-machine internet.
 
 ZPL-S lets agents exchange verifiable machine state instead of long prose:
 canonical frames, semantic hashes, Q-state vectors, deterministic observation,
@@ -66,7 +66,7 @@ git remote add origin https://github.com/<your-user>/zpls-protocol.git
 
 ## Claim This
 
-- experimental protocol kernel,
+- protocol kernel,
 - runnable HTTP Fabric,
 - deterministic conformance vectors,
 - compact state frames,

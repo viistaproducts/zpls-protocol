@@ -7,5 +7,5 @@ authors:
 version: "0.1.0"
 date-released: "2026-06-30"
 repository-code: "https://github.com/viistaproducts/zpls-protocol"
-abstract: "Experimental AI-machine internet protocol with canonical state frames, Q-matrix logic, HMAC seals, HTTP Fabric and conformance tests."
+abstract: "AI-machine internet protocol with canonical state frames, Q-matrix logic, HMAC seals, HTTP Fabric and conformance tests."
 license: "Apache-2.0"

@@ -2,8 +2,8 @@
 
 ## Abstract
 
-ZPL-S is an experimental protocol kernel for compact AI-to-AI and
-machine-to-machine coordination. Instead of exchanging natural-language
+ZPL-S is a protocol kernel for compact AI-to-AI and machine-to-machine
+coordination. Instead of exchanging natural-language
 instructions as the primary machine interface, systems exchange canonical state
 frames with operation, target, confidence, risk and delta semantics. The
 protocol adds a quantum-inspired Q-Matrix overlay for representing multiple
