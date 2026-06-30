@@ -12,7 +12,7 @@ Recommended: `zpls-protocol`
 ## Short Description
 
 ```text
-AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC seals, HTTP fabric and conformance tests.
+AI-machine internet protocol: canonical state frames, Q-field logic, HMAC seals, HTTP fabric and conformance tests.
 ```
 
 ## README Badge Ideas
@@ -29,8 +29,9 @@ AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC seals
 I built a protocol kernel for the AI-machine internet.
 
 ZPL-S lets agents exchange verifiable machine state instead of long prose:
-canonical frames, semantic hashes, Q-state vectors, deterministic observation,
-HMAC seals, an HTTP Fabric gateway and conformance vectors.
+canonical frames, semantic hashes, Q-state vectors, layer/state tensor fields,
+deterministic observation, HMAC seals, an HTTP Fabric gateway and conformance
+vectors.
 
 It is not AGI and not quantum-computing hype. It is a runnable protocol layer:
 `zpls conformance`, `zpls fabric-demo`, `zpls serve`.
@@ -70,6 +71,6 @@ git remote add origin https://github.com/<your-user>/zpls-protocol.git
 - runnable HTTP Fabric,
 - deterministic conformance vectors,
 - compact state frames,
-- quantum-inspired state logic,
+- quantum-inspired Q-field state logic,
 - HMAC integrity,
 - Python reference implementation.

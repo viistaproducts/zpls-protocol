@@ -8,8 +8,8 @@ itself. It gives agents and machines a deterministic way to exchange state.
 ## Is This Real Quantum Computing?
 
 No. The Q-Matrix is quantum-inspired protocol logic. It uses state vectors,
-phase, interference and observation as useful abstractions for unresolved
-machine state. It does not claim physical quantum computation.
+layer vectors, phase, interference and observation as useful abstractions for
+unresolved machine state. It does not claim physical quantum computation.
 
 ## Why Not Just JSON?
 
@@ -18,6 +18,7 @@ canonical and designed for machine-state deltas. JSON alone does not define:
 
 - canonical semantic hashing,
 - Q-state weights and phases,
+- layer/state tensor fields,
 - deterministic observation,
 - protocol-level risk/confidence semantics,
 - HMAC seal material,

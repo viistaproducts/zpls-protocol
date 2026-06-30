@@ -15,7 +15,7 @@ from zpls.seal import SEAL_KEY, seal_zpls_frame, strip_zpls_seal, verify_zpls_se
 FABRIC_VERSION = "F1"
 FABRIC_CONTENT_TYPE = "application/zpls+text"
 DEFAULT_TRANSPORTS = ("https+json",)
-DEFAULT_FEATURES = ("binary", "mesh", "qgate", "qmatrix", "seal")
+DEFAULT_FEATURES = ("binary", "mesh", "qfield", "qgate", "qmatrix", "seal")
 
 
 @dataclass(frozen=True)

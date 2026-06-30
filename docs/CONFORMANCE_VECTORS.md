@@ -177,19 +177,19 @@ anderen Key oder nach semantischer Veraenderung des Frames muss fehlschlagen.
 Planner-Descriptor:
 
 ```json
-{"endpoint":"https://planner.example/.well-known/zpls.json","fabric_version":"F1","features":["binary","mesh","qgate","qmatrix","seal"],"node_id":"planner.example","operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_versions":["S1"],"roles":["planner"],"seal_key_ids":["mesh"],"transports":["https+json"]}
+{"endpoint":"https://planner.example/.well-known/zpls.json","fabric_version":"F1","features":["binary","mesh","qfield","qgate","qmatrix","seal"],"node_id":"planner.example","operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_versions":["S1"],"roles":["planner"],"seal_key_ids":["mesh"],"transports":["https+json"]}
 ```
 
 Worker-Descriptor:
 
 ```json
-{"endpoint":"https://worker.example/.well-known/zpls.json","fabric_version":"F1","features":["binary","mesh","qgate","qmatrix","seal"],"node_id":"worker.example","operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_versions":["S1"],"roles":["worker"],"seal_key_ids":["mesh"],"transports":["https+json"]}
+{"endpoint":"https://worker.example/.well-known/zpls.json","fabric_version":"F1","features":["binary","mesh","qfield","qgate","qmatrix","seal"],"node_id":"worker.example","operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_versions":["S1"],"roles":["worker"],"seal_key_ids":["mesh"],"transports":["https+json"]}
 ```
 
 Agreement:
 
 ```json
-{"features":["binary","mesh","qgate","qmatrix","seal"],"operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_version":"S1","seal_key_ids":["mesh"],"transport":"https+json"}
+{"features":["binary","mesh","qfield","qgate","qmatrix","seal"],"operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_version":"S1","seal_key_ids":["mesh"],"transport":"https+json"}
 ```
 
 Envelope:
@@ -210,7 +210,99 @@ Replay-Receipt fuer dasselbe Envelope im selben Gateway:
 {"accepted":false,"destination":"worker.example","frame_hash":"4a66dcefb21e","reason":"replay","receiver":null,"source":"planner.example","trace_id":"trace.demo"}
 ```
 
-## Vektor 6: CLI/Mesh-Mindestverhalten
+## Vektor 6: Q-Field Layer-Tensor
+
+Unbeobachteter Q-Field-Frame:
+
+```text
+§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med Δ{ent:[coder.17,critic.17],q:[revise@.4/-.25,ship@.6],ql:[prod@.45/-.25,sim@.55/.25]}
+```
+
+Semantischer Hash, Laenge 12:
+
+```text
+49d56f180c80
+```
+
+Binaer-Hex:
+
+```text
+5a504c530101060204386633630231371fa4667b22656e74223a5b22636f6465722e3137222c226372697469632e3137225d2c2271223a5b22726576697365402e342f2d2e3235222c2273686970402e36225d2c22716c223a5b2270726f64402e34352f2d2e3235222c2273696d402e35352f2e3235225d7d
+```
+
+Tensorfeld:
+
+```text
+q:[prod/revise@.18/-.5,prod/ship@.27/-.25,sim/revise@.22,sim/ship@.33/.25]
+```
+
+Q-Field-Kohaerenz:
+
+```text
+.1644
+```
+
+Tensorframe:
+
+```text
+§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med Δ{ent:[coder.17,critic.17],q:[prod/revise@.18/-.5,prod/ship@.27/-.25,sim/revise@.22,sim/ship@.33/.25],qcoh:.1644}
+```
+
+Tensorframe-Hash, Laenge 12:
+
+```text
+fbfe9be78809
+```
+
+Tensorframe-Binaer-Hex:
+
+```text
+5a504c530101060204386633630231371fa483017b22656e74223a5b22636f6465722e3137222c226372697469632e3137225d2c2271223a5b2270726f642f726576697365402e31382f2d2e35222c2270726f642f73686970402e32372f2d2e3235222c2273696d2f726576697365402e3232222c2273696d2f73686970402e33332f2e3235225d2c2271636f68223a302e313634347d
+```
+
+Beobachter:
+
+```text
+human
+```
+
+State-Beobachtungs-Bucket:
+
+```text
+140
+```
+
+Layer-Beobachtungs-Bucket:
+
+```text
+3488
+```
+
+Layer-Beobachtungsmaterial:
+
+```json
+{"axis":"layer","frame":{"agent":"planner","confidence":0.81,"delta":{"ent":["coder.17","critic.17"],"q":["revise@.4/-.25","ship@.6"],"ql":["prod@.45/-.25","sim@.55/.25"]},"op":"plan","risk":"med","state_hash":"8f3c","target":"17","version":"S1"},"observer":"human"}
+```
+
+Beobachteter Q-Field-Frame:
+
+```text
+§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med Δ{ent:[coder.17,critic.17],qlphase:-.25,qlpick:prod,qobs:human,qphase:-.25,qpick:revise}
+```
+
+Beobachteter Q-Field-Hash, Laenge 12:
+
+```text
+c92375527dc0
+```
+
+Beobachtetes Q-Field-Binaer-Hex:
+
+```text
+5a504c530101060204386633630231371fa46f7b22656e74223a5b22636f6465722e3137222c226372697469632e3137225d2c22716c7068617365223a2d302e32352c22716c7069636b223a2270726f64222c22716f6273223a2268756d616e222c22717068617365223a2d302e32352c22717069636b223a22726576697365227d
+```
+
+## Vektor 7: CLI/Mesh-Mindestverhalten
 
 Der Befehl
 

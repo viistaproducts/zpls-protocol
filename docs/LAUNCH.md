@@ -36,6 +36,7 @@ ZPL-S makes the machine layer explicit:
 - stable semantic hashing,
 - deterministic binary representation,
 - sparse Q-state vectors,
+- layer/state tensor fields,
 - phase-based interference,
 - deterministic observation,
 - HMAC-sealed frames,
@@ -90,8 +91,8 @@ Do not claim:
 What if AI agents stopped chatting and started exchanging verifiable state?
 
 ZPL-S is a compact protocol for the AI-machine internet:
-canonical frames, Q-state vectors, deterministic observation, HMAC seals,
-HTTP fabric envelopes and conformance tests.
+canonical frames, Q-state vectors, layer/state tensor fields, deterministic
+observation, HMAC seals, HTTP fabric envelopes and conformance tests.
 
 Not AGI. Not quantum hype. A real protocol kernel you can run today.
 ```
@@ -99,7 +100,7 @@ Not AGI. Not quantum hype. A real protocol kernel you can run today.
 ## Suggested GitHub Description
 
 ```text
-AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC seals, HTTP fabric and conformance tests.
+AI-machine internet protocol: canonical state frames, Q-field logic, HMAC seals, HTTP fabric and conformance tests.
 ```
 
 ## Suggested Topics

@@ -5,6 +5,7 @@ import hashlib
 from zpls import (
     QBranch,
     QEdge,
+    QLayer,
     PeerKeyring,
     ZplsInternetGateway,
     ZplsNodeDescriptor,
@@ -14,9 +15,15 @@ from zpls import (
     make_qframe,
     negotiate_capabilities,
     observe_qstate,
+    parse_qbranches,
+    parse_qlayers,
     parse_zpls,
+    q_layer_observation_bucket,
+    q_layer_observation_material,
     q_observation_bucket,
     q_observation_material,
+    qfield_coherence,
+    qfield_to_frame,
     seal_zpls_frame,
     semantic_hash,
     serialize_zpls,
@@ -82,12 +89,12 @@ def test_fabric_conformance_vector_5():
 
     assert planner.to_json() == (
         '{"endpoint":"https://planner.example/.well-known/zpls.json","fabric_version":"F1",'
-        '"features":["binary","mesh","qgate","qmatrix","seal"],"node_id":"planner.example",'
+        '"features":["binary","mesh","qfield","qgate","qmatrix","seal"],"node_id":"planner.example",'
         '"operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_versions":["S1"],'
         '"roles":["planner"],"seal_key_ids":["mesh"],"transports":["https+json"]}'
     )
     assert canonical_json(agreement.canonical()) == (
-        '{"features":["binary","mesh","qgate","qmatrix","seal"],'
+        '{"features":["binary","mesh","qfield","qgate","qmatrix","seal"],'
         '"operations":["ack","done","escalate","eval","patch","plan","task"],'
         '"protocol_version":"S1","seal_key_ids":["mesh"],"transport":"https+json"}'
     )
@@ -179,4 +186,58 @@ def test_qmatrix_conformance_vector_2():
     assert (
         encode_zpls_binary(observed).hex()
         == "5a504c530101060204386633630231371fa43e7b22656e74223a5b22636f6465722e3137222c226372697469632e3137225d2c22716f6273223a2268756d616e222c22717069636b223a2273686970227d"
+    )
+
+
+def test_qfield_conformance_vector_7():
+    frame = make_qframe(
+        agent="planner",
+        state_hash="8f3c",
+        op="plan",
+        target="17",
+        confidence=0.81,
+        risk="med",
+        branches=[QBranch("revise", 0.4, -0.25), QBranch("ship", 0.6)],
+        layers=[QLayer("sim", 0.55, 0.25), QLayer("prod", 0.45, -0.25)],
+        entangled=["critic.17", "coder.17"],
+    )
+    tensor_frame = qfield_to_frame(frame)
+    observed = observe_qstate(frame, "human")
+
+    assert serialize_zpls(frame) == (
+        "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+        "Δ{ent:[coder.17,critic.17],q:[revise@.4/-.25,ship@.6],ql:[prod@.45/-.25,sim@.55/.25]}"
+    )
+    assert semantic_hash(frame) == "49d56f180c80"
+    assert (
+        encode_zpls_binary(frame).hex()
+        == "5a504c530101060204386633630231371fa4667b22656e74223a5b22636f6465722e3137222c226372697469632e3137225d2c2271223a5b22726576697365402e342f2d2e3235222c2273686970402e36225d2c22716c223a5b2270726f64402e34352f2d2e3235222c2273696d402e35352f2e3235225d7d"
+    )
+    assert qfield_coherence(parse_qbranches(frame.delta["q"]), parse_qlayers(frame.delta["ql"])) == 0.1644
+    assert serialize_zpls(tensor_frame) == (
+        "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+        "Δ{ent:[coder.17,critic.17],"
+        "q:[prod/revise@.18/-.5,prod/ship@.27/-.25,sim/revise@.22,sim/ship@.33/.25],qcoh:.1644}"
+    )
+    assert semantic_hash(tensor_frame) == "fbfe9be78809"
+    assert (
+        encode_zpls_binary(tensor_frame).hex()
+        == "5a504c530101060204386633630231371fa483017b22656e74223a5b22636f6465722e3137222c226372697469632e3137225d2c2271223a5b2270726f642f726576697365402e31382f2d2e35222c2270726f642f73686970402e32372f2d2e3235222c2273696d2f726576697365402e3232222c2273696d2f73686970402e33332f2e3235225d2c2271636f68223a302e313634347d"
+    )
+    assert q_observation_bucket(frame, "human") == 140
+    assert q_layer_observation_bucket(frame, "human") == 3488
+    assert q_layer_observation_material(frame, "human") == (
+        '{"axis":"layer","frame":{"agent":"planner","confidence":0.81,'
+        '"delta":{"ent":["coder.17","critic.17"],"q":["revise@.4/-.25","ship@.6"],'
+        '"ql":["prod@.45/-.25","sim@.55/.25"]},"op":"plan","risk":"med",'
+        '"state_hash":"8f3c","target":"17","version":"S1"},"observer":"human"}'
+    )
+    assert serialize_zpls(observed) == (
+        "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+        "Δ{ent:[coder.17,critic.17],qlphase:-.25,qlpick:prod,qobs:human,qphase:-.25,qpick:revise}"
+    )
+    assert semantic_hash(observed) == "c92375527dc0"
+    assert (
+        encode_zpls_binary(observed).hex()
+        == "5a504c530101060204386633630231371fa46f7b22656e74223a5b22636f6465722e3137222c226372697469632e3137225d2c22716c7068617365223a2d302e32352c22716c7069636b223a2270726f64222c22716f6273223a2268756d616e222c22717068617365223a2d302e32352c22717069636b223a22726576697365227d"
     )

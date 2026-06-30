@@ -75,10 +75,14 @@ Reservierte Q-Deltakeys:
 
 ```text
 q      Superpositionsvektor
+ql     Layer-Superpositionsvektor
 ent    verschraenkte oder korrelierte entfernte Zustandsreferenzen
 qobs   Beobachter-ID des Kollapses
 qpick  ausgewaehlter Zustand nach Beobachtung
 qphase optionale Phase des ausgewaehlten Zustands
+qlpick ausgewaehlter Layer nach Beobachtung
+qlphase optionale Phase des ausgewaehlten Layers
+qcoh   Q-Field-Kohaerenz nach Tensorprojektion
 gate   sparse Q-Matrix-Kanten
 ```
 
@@ -94,17 +98,28 @@ gate   sparse Q-Matrix-Kanten
 <src_ref>=<dst_ref>@<gain>[/<phase_shift>]
 ```
 
+`ql` ist eine Liste von Layer-Tokens:
+
+```text
+<layer_ref>@<weight>[/<phase>]
+```
+
 Regeln:
 
 - `state_ref` ist eine kompakte skalare Referenz.
 - `weight` liegt in `(0, 1]`.
 - Branch-Gewichte verwenden Q4-Festkomma: `1.0 == 10000`.
 - Branch-Gewichte muessen nach Kanonisierung exakt `10000` Q4-Einheiten ergeben.
+- Layer-Gewichte verwenden dieselbe Q4-Skala und muessen ebenfalls exakt
+  `10000` Q4-Einheiten ergeben.
 - `phase` ist optional und liegt in `[-1, 1]`.
 - Branch-Refs sind eindeutig und werden kanonisch nach Ref sortiert.
+- Layer-Refs sind eindeutig und werden kanonisch nach Ref sortiert.
 - `ent`-Refs sind eindeutig und werden kanonisch sortiert.
 - Unbeobachtete Frames tragen `q`.
-- Beobachtete Frames entfernen `q` und tragen `qobs` plus `qpick`.
+- Unbeobachtete Q-Fields tragen `q` plus `ql`.
+- Beobachtete Frames entfernen `q` und `ql` und tragen `qobs`, `qpick` und
+  optional `qlpick`.
 - API-Eingaben duerfen numerisch sein; Wire-Tokens sind Dezimaltext mit maximal
   vier Nachkommastellen.
 - Wire-Tokens mit mehr als vier Nachkommastellen sind ungueltig.
@@ -112,6 +127,10 @@ Regeln:
 - Gate-Refs duerfen Layerpraefixe wie `u0/a` und `u1/x` tragen.
 - Ein Gate projiziert einen Q-Vektor in einen neuen Q-Vektor.
 - Beitraege auf dasselbe Ziel interferieren ueber ihre Phase vor der Normierung.
+- Ein Q-Field bildet das Tensorprodukt aus States und Layern. Ein State
+  `revise@.4/-.25` und ein Layer `prod@.45/-.25` ergeben den Tensorbranch
+  `prod/revise@.18/-.5`.
+- `qcoh` ist die Q4-normalisierte mittlere Phasenkohaerenz des Tensorfelds.
 
 Unbeobachteter Beispielzustand:
 
@@ -136,6 +155,16 @@ bucket   = floor(int(digest64, 16) * 10000 / 16^16)
 Branches werden in kanonischer Ref-Reihenfolge summiert. Der erste Branch, fuer
 den `bucket < cumulative_weight_q4` gilt, wird ausgewaehlt. So entsteht
 verspaetete Materialisierung ohne nicht-replaybaren Zufall.
+
+Wenn ein Frame `ql` traegt, muss die Layerbeobachtung eine getrennte Achse
+verwenden:
+
+```text
+material = canonical_json({"axis":"layer","frame":frame.canonical(),"observer":observer})
+```
+
+Der resultierende Bucket wird ueber die kanonisch sortierten Layer summiert und
+ergibt `qlpick`.
 
 ## 5. Mesh-Kernel
 
@@ -202,7 +231,7 @@ Ein Knoten kann unter einem bekannten HTTPS-Endpunkt, z.B.
 `/.well-known/zpls.json`, einen Descriptor veroeffentlichen:
 
 ```json
-{"endpoint":"https://worker.example/.well-known/zpls.json","fabric_version":"F1","features":["binary","mesh","qgate","qmatrix","seal"],"node_id":"worker.example","operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_versions":["S1"],"roles":["worker"],"seal_key_ids":["mesh"],"transports":["https+json"]}
+{"endpoint":"https://worker.example/.well-known/zpls.json","fabric_version":"F1","features":["binary","mesh","qfield","qgate","qmatrix","seal"],"node_id":"worker.example","operations":["ack","done","escalate","eval","patch","plan","task"],"protocol_versions":["S1"],"roles":["worker"],"seal_key_ids":["mesh"],"transports":["https+json"]}
 ```
 
 Normative Felder:
@@ -214,7 +243,7 @@ Normative Felder:
 - `transports`: z.B. `https+json`.
 - `roles`: lokale Rollen, die der Knoten routen kann.
 - `operations`: akzeptierte Operationen.
-- `features`: z.B. `qmatrix`, `qgate`, `seal`, `binary`, `mesh`.
+- `features`: z.B. `qfield`, `qmatrix`, `qgate`, `seal`, `binary`, `mesh`.
 - `seal_key_ids`: bekannte Key-IDs fuer gesiegelte Frames.
 
 ### Capability-Negotiation

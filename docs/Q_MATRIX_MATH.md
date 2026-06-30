@@ -46,7 +46,73 @@ Norm:
 sum(weight_i) = 10000
 ```
 
-## 3. Verschraenkung
+## 3. Layer-Feld
+
+Ein Q-Field kann zusaetzlich zum State-Vektor einen Layer-Vektor tragen:
+
+```text
+ql:[prod@.45/-.25,sim@.55/.25]
+```
+
+Das ist die Protokollform fuer parallele Arbeitswelten, Ausfuehrungsmodi oder
+Simulationslayer. Wie bei `q` gilt:
+
+```text
+sum(layer_weight_k) = 10000
+```
+
+Das Tensorprodukt aus State `i` und Layer `k` ist:
+
+```text
+ref_ki    = layer_ref_k + "/" + state_ref_i
+mass_ki   = round(layer_weight_k * state_weight_i / Q)
+phase_ki  = wrap(layer_phase_k + state_phase_i)
+```
+
+Beispiel:
+
+```text
+q:[revise@.4/-.25,ship@.6]
+ql:[prod@.45/-.25,sim@.55/.25]
+```
+
+ergibt:
+
+```text
+q:[prod/revise@.18/-.5,prod/ship@.27/-.25,sim/revise@.22,sim/ship@.33/.25]
+```
+
+Die Massen werden nach dem Tensorprodukt wieder auf `sum = Q` normiert, damit
+die Wire-Semantik stabil bleibt.
+
+## 4. Q-Field-Kohaerenz
+
+Die Kohaerenz eines Tensorfelds misst, ob die moeglichen Welten phasisch
+zusammenarbeiten oder gegeneinander laufen.
+
+Fuer jedes Paar `a,b` im Tensorfeld:
+
+```text
+pair_mass = round(mass_a * mass_b / Q)
+distance  = circular_distance(phase_a, phase_b)
+coherence = Q - 2 * distance
+```
+
+Die Feldkohaerenz ist:
+
+```text
+field_coherence = round(sum(pair_mass * coherence) / sum(pair_mass))
+```
+
+Wire-Form:
+
+```text
+qcoh:.1644
+```
+
+`+1.0` bedeutet voll phasengleich, `0` neutral, `-1.0` stark gegenphasig.
+
+## 5. Verschraenkung
 
 Verschraenkung ist eine Korrelation von entfernten Zustandsreferenzen:
 
@@ -63,7 +129,7 @@ Dieser lokale Zustand ist semantisch an diese entfernten Slots gekoppelt.
 Eine Implementierung kann damit entscheiden, welche entfernten Slots bei
 Beobachtung, Audit oder Synchronisation gemeinsam betrachtet werden muessen.
 
-## 4. Sparse Gate Matrix
+## 6. Sparse Gate Matrix
 
 Ein Gate ist eine sparse Matrix aus gerichteten Kanten:
 
@@ -91,7 +157,7 @@ u0 -> u1
 
 aber mit Wellenphase und Interferenz.
 
-## 5. Projektion Durch Ein Gate
+## 7. Projektion Durch Ein Gate
 
 Fuer jeden Branch `i` und jede Kante `i -> j`:
 
@@ -102,7 +168,7 @@ phase_ij = wrap(phase_i + phase_shift_ij)
 
 `wrap` bildet Phasen wieder auf `[-Q, Q)` ab.
 
-## 6. Interferenz
+## 8. Interferenz
 
 Alle Beitraege auf dasselbe Ziel `j` werden gruppiert.
 
@@ -130,7 +196,7 @@ raw_j = max(0, raw_j)
 
 Danach werden alle `raw_j` wieder auf `sum = Q` normiert.
 
-## 7. Beobachtung
+## 9. Beobachtung
 
 Unbeobachtet bleibt der Zustand als Vektor:
 
@@ -161,9 +227,16 @@ bucket < cumulative_weight
 
 gilt, wird `qpick`.
 
+Wenn `ql` vorhanden ist, wird eine zweite Beobachtungsachse berechnet:
+
+```text
+material = canonical_json({"axis":"layer","frame":frame.canonical(),"observer":observer})
+```
+
+Der Layerbucket kollabiert den kanonisch sortierten Layervektor zu `qlpick`.
 Das ist kein Zufall. Es ist beobachtergebundene, replaybare Materialisierung.
 
-## 8. Warum Das Fuer KI-Agenten Sinn Ergibt
+## 10. Warum Das Fuer KI-Agenten Sinn Ergibt
 
 Ein LLM- oder Agentensystem hat oft mehrere plausible naechste Schritte:
 

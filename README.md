@@ -5,8 +5,8 @@
 ![protocol](https://img.shields.io/badge/protocol-ZPL--S%20S1-black)
 ![license](https://img.shields.io/badge/license-Apache--2.0-green)
 
-AI-machine internet protocol: canonical state frames, Q-matrix logic, HMAC
-seals, HTTP Fabric and conformance tests.
+AI-machine internet protocol: canonical state frames, Q-field/Q-matrix logic,
+HMAC seals, HTTP Fabric and conformance tests.
 
 ZPL-S ist ein kompaktes, deterministisches Protokoll fuer die Kommunikation
 zwischen KI-Systemen, Agenten und Maschinen. Es ist keine Chat-Sprache.
@@ -33,7 +33,8 @@ Matrix:
 - mehrere moegliche Zustaende gleichzeitig,
 - verschraenkte Referenzen zwischen Agenten,
 - Interferenz zwischen konkurrierenden Pfaden,
-- mehrere Layer wie parallele Arbeitswelten,
+- explizite Layer-Superpositionen wie parallele Arbeitswelten,
+- Tensorfelder aus Zustand x Layer,
 - deterministischer Kollaps erst bei Beobachtung,
 - kompakte Frames statt langer Kontextkopien.
 
@@ -56,14 +57,27 @@ Bedeutung:
 - `ship@.63` bedeutet: Zustand `ship`, Gewicht `0.63`, Phase `0`.
 - `ent` sind verschraenkte oder korrelierte entfernte Zustandsreferenzen.
 
+Ein unbeobachtetes Q-Field mit zwei moeglichen States und zwei moeglichen
+Ausfuehrungslayern:
+
+```text
+Δ{q:[revise@.4/-.25,ship@.6],ql:[prod@.45/-.25,sim@.55/.25]}
+```
+
+Das Tensorfeld daraus ist:
+
+```text
+q:[prod/revise@.18/-.5,prod/ship@.27/-.25,sim/revise@.22,sim/ship@.33/.25]
+```
+
 Wenn ein Beobachter explizit wird:
 
 ```text
-Δ{ent:[coder.17,critic.17],qobs:human,qpick:ship}
+Δ{qlphase:-.25,qlpick:prod,qobs:human,qpick:ship}
 ```
 
-Dann ist der Zustand kollabiert. Nicht zufaellig, sondern deterministisch aus
-kanonischem Frame und Beobachter-ID.
+Dann sind Zustand und Layer kollabiert. Nicht zufaellig, sondern
+deterministisch aus kanonischem Frame und Beobachter-ID.
 
 ## Layer Und Interferenz
 
@@ -98,7 +112,7 @@ Die Mathematik dazu steht in [Q_MATRIX_MATH.md](docs/Q_MATRIX_MATH.md).
 - Kompakte binaere Repraesentation.
 - Stabile semantische Hashes.
 - Q-Matrix-Helfer fuer Superposition, Verschraenkung, Layer-Gates,
-  Interferenz und Beobachtung.
+  Layer-Superposition, Tensorfelder, Interferenz und Beobachtung.
 - HMAC-Sealing fuer unveraenderte, pruefbare Maschinenframes.
 - Minimaler Mesh-Kernel mit Agent-Registrierung, Routing, Inbox und Eventlog.
 - Internet-Fabric fuer Discovery, Capability-Negotiation, signierte Envelopes
@@ -144,6 +158,14 @@ zpls qgate \
   --frame '§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med Δ{q:[u0/a@.5,u0/b@.5/.5]}' \
   --edges 'u0/a=u1/x@.8,u0/b=u1/x@.8,u0/a=u1/y@.2,u0/b=u1/y@.2/-.5' \
   --keep-gate
+
+zpls qmake \
+  --agent planner --state 8f3c --op plan --target 17 --confidence .81 --risk med \
+  --branches 'revise@.4/-.25,ship@.6' \
+  --layers 'sim@.55/.25,prod@.45/-.25'
+
+zpls qfield \
+  --frame '§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med Δ{q:[revise@.4/-.25,ship@.6],ql:[prod@.45/-.25,sim@.55/.25]}'
 
 zpls observe \
   --observer human --json \

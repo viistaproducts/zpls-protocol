@@ -69,6 +69,64 @@ def test_cli_qmake_qgate_observe_flow(capsys):
     )
 
 
+def test_cli_qfield_flow(capsys):
+    assert (
+        main(
+            [
+                "qmake",
+                "--agent",
+                "planner",
+                "--state",
+                "8f3c",
+                "--op",
+                "plan",
+                "--target",
+                "17",
+                "--confidence",
+                ".81",
+                "--risk",
+                "med",
+                "--branches",
+                "revise@.4/-.25,ship@.6",
+                "--layers",
+                "sim@.55/.25,prod@.45/-.25",
+            ]
+        )
+        == 0
+    )
+    qfield = capsys.readouterr().out.strip()
+    assert qfield == (
+        "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+        "Δ{q:[revise@.4/-.25,ship@.6],ql:[prod@.45/-.25,sim@.55/.25]}"
+    )
+
+    assert main(["qfield", "--frame", qfield]) == 0
+    tensor = json.loads(capsys.readouterr().out)
+    assert tensor["coherence"] == 0.1644
+    assert tensor["tensor"] == [
+        "prod/revise@.18/-.5",
+        "prod/ship@.27/-.25",
+        "sim/revise@.22",
+        "sim/ship@.33/.25",
+    ]
+
+    assert main(["qfield", "--frame", qfield, "--as-frame"]) == 0
+    tensor_frame = capsys.readouterr().out.strip()
+    assert tensor_frame == (
+        "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+        "Δ{q:[prod/revise@.18/-.5,prod/ship@.27/-.25,sim/revise@.22,sim/ship@.33/.25],qcoh:.1644}"
+    )
+
+    assert main(["observe", "--observer", "human", "--json", qfield]) == 0
+    observed = json.loads(capsys.readouterr().out)
+    assert observed["bucket"] == 9949
+    assert observed["layer_bucket"] == 4301
+    assert observed["observed"] == (
+        "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+        "Δ{qlphase:-.25,qlpick:prod,qobs:human,qpick:ship}"
+    )
+
+
 def test_cli_validate_failure_returns_nonzero(capsys):
     assert main(["validate", "not-a-frame"]) == 1
 

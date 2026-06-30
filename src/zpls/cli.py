@@ -8,6 +8,9 @@ from typing import Sequence
 
 from zpls import (
     QBranch,
+    QLayer,
+    Q_LAYER_KEY,
+    Q_STATE_KEY,
     PeerKeyring,
     ZplsInternetGateway,
     ZplsHttpServerConfig,
@@ -19,9 +22,11 @@ from zpls import (
     explain_qstate,
     explain_zpls,
     format_qbranches,
+    format_qlayers,
     make_qframe,
     observe_qstate,
     parse_qbranches,
+    parse_qlayers,
     parse_qedges,
     parse_fabric_envelope,
     parse_node_descriptor,
@@ -29,6 +34,11 @@ from zpls import (
     negotiate_capabilities,
     q_observation_bucket,
     q_observation_material,
+    q_layer_observation_bucket,
+    q_layer_observation_material,
+    qfield_coherence,
+    qfield_tensor,
+    qfield_to_frame,
     run_zpls_http_server,
     seal_zpls_frame,
     semantic_hash,
@@ -79,6 +89,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_qmake.add_argument("--confidence", type=float, required=True)
     p_qmake.add_argument("--risk", required=True)
     p_qmake.add_argument("--branches", required=True, help="Kommagetrennte Q-Branches")
+    p_qmake.add_argument("--layers", default="", help="Kommagetrennte Q-Layer")
     p_qmake.add_argument("--entangled", default="", help="Kommagetrennte Entanglement-Refs")
     p_qmake.set_defaults(func=_cmd_qmake)
 
@@ -87,6 +98,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_qgate.add_argument("--edges", required=True, help="Kommagetrennte QEdge-Tokens")
     p_qgate.add_argument("--keep-gate", action="store_true", help="Gate im Delta mit ausgeben")
     p_qgate.set_defaults(func=_cmd_qgate)
+
+    p_qfield = sub.add_parser("qfield", help="Q-State und Q-Layer zu Tensorfeld expandieren")
+    p_qfield.add_argument("--frame", help="Q-Frame-Text, sonst stdin")
+    p_qfield.add_argument("--as-frame", action="store_true", help="Tensorfeld als kanonischen Frame ausgeben")
+    p_qfield.add_argument("--keep-layers", action="store_true", help="Layerliste im Tensorframe behalten")
+    p_qfield.set_defaults(func=_cmd_qfield)
 
     p_observe = sub.add_parser("observe", help="Q-Frame durch Beobachter kollabieren")
     p_observe.add_argument("--observer", required=True)
@@ -104,7 +121,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_fdesc.add_argument("--node-id", required=True)
     p_fdesc.add_argument("--endpoint", required=True)
     p_fdesc.add_argument("--roles", default="worker")
-    p_fdesc.add_argument("--features", default="binary,mesh,qgate,qmatrix,seal")
+    p_fdesc.add_argument("--features", default="binary,mesh,qfield,qgate,qmatrix,seal")
     p_fdesc.add_argument("--transports", default="https+json")
     p_fdesc.add_argument("--seal-key-ids", default="mesh")
     p_fdesc.set_defaults(func=_cmd_fabric_describe)
@@ -237,6 +254,7 @@ def _cmd_qmake(args: argparse.Namespace) -> int:
         confidence=args.confidence,
         risk=args.risk,
         branches=parse_qbranches(_split_csv(args.branches)),
+        layers=parse_qlayers(_split_csv(args.layers)) if args.layers else (),
         entangled=_split_csv(args.entangled),
     )
     print(serialize_zpls(frame))
@@ -250,20 +268,54 @@ def _cmd_qgate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_qfield(args: argparse.Namespace) -> int:
+    frame = parse_zpls(_read_arg_or_stdin(args.frame).strip())
+    if args.as_frame:
+        print(serialize_zpls(qfield_to_frame(frame, keep_layers=args.keep_layers)))
+        return 0
+    raw_branches = frame.delta.get(Q_STATE_KEY)
+    raw_layers = frame.delta.get(Q_LAYER_KEY)
+    if not isinstance(raw_branches, list):
+        raise ValueError("ZPL-S frame does not carry a Q superposition")
+    if not isinstance(raw_layers, list):
+        raise ValueError("ZPL-S frame does not carry Q layers")
+    branches = parse_qbranches(raw_branches)
+    layers = parse_qlayers(raw_layers)
+    tensor = qfield_tensor(branches, layers)
+    print(
+        json.dumps(
+            {
+                "coherence": qfield_coherence(branches, layers),
+                "layers": format_qlayers(layers),
+                "tensor": format_qbranches(tensor),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _cmd_observe(args: argparse.Namespace) -> int:
     frame = parse_zpls(_read_arg_or_stdin(args.input).strip())
     observed = observe_qstate(frame, args.observer)
     if args.json:
         material = q_observation_material(frame, args.observer)
+        payload = {
+            "material": material,
+            "sha256": hashlib.sha256(material.encode("utf-8")).hexdigest(),
+            "bucket": q_observation_bucket(frame, args.observer),
+            "observed": serialize_zpls(observed),
+            "observed_hash": semantic_hash(observed),
+        }
+        if Q_LAYER_KEY in frame.delta:
+            layer_material = q_layer_observation_material(frame, args.observer)
+            payload["layer_material"] = layer_material
+            payload["layer_sha256"] = hashlib.sha256(layer_material.encode("utf-8")).hexdigest()
+            payload["layer_bucket"] = q_layer_observation_bucket(frame, args.observer)
         print(
             json.dumps(
-                {
-                    "material": material,
-                    "sha256": hashlib.sha256(material.encode("utf-8")).hexdigest(),
-                    "bucket": q_observation_bucket(frame, args.observer),
-                    "observed": serialize_zpls(observed),
-                    "observed_hash": semantic_hash(observed),
-                },
+                payload,
                 ensure_ascii=False,
                 indent=2,
             )
@@ -285,6 +337,19 @@ def _cmd_conformance(_args: argparse.Namespace) -> int:
         branches=[QBranch("revise", 0.37, -0.5), QBranch("ship", 0.63)],
         entangled=["critic.17", "coder.17"],
     )
+    qfield_frame = make_qframe(
+        agent="planner",
+        state_hash="8f3c",
+        op="plan",
+        target="17",
+        confidence=0.81,
+        risk="med",
+        branches=[QBranch("revise", 0.4, -0.25), QBranch("ship", 0.6)],
+        layers=[QLayer("sim", 0.55, 0.25), QLayer("prod", 0.45, -0.25)],
+        entangled=["critic.17", "coder.17"],
+    )
+    qfield_tensor_frame = qfield_to_frame(qfield_frame)
+    qfield_observed = observe_qstate(qfield_frame, "human")
     planner = ZplsNodeDescriptor("planner.example", "https://planner.example/.well-known/zpls.json", roles=("planner",))
     worker = ZplsNodeDescriptor("worker.example", "https://worker.example/.well-known/zpls.json", roles=("worker",))
     fabric_frame = parse_zpls("§S1 a:planner sh:8f3c op:plan t:17 c:.91 r:low Δ{next:worker}")
@@ -313,6 +378,17 @@ def _cmd_conformance(_args: argparse.Namespace) -> int:
         "q_bucket": q_observation_bucket(qframe, "human") == 8738,
         "q_observed": serialize_zpls(observe_qstate(qframe, "human"))
         == "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med Δ{ent:[coder.17,critic.17],qobs:human,qpick:ship}",
+        "qfield_tensor": serialize_zpls(qfield_tensor_frame)
+        == (
+            "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+            "Δ{ent:[coder.17,critic.17],"
+            "q:[prod/revise@.18/-.5,prod/ship@.27/-.25,sim/revise@.22,sim/ship@.33/.25],qcoh:.1644}"
+        ),
+        "qfield_observed": serialize_zpls(qfield_observed)
+        == (
+            "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+            "Δ{ent:[coder.17,critic.17],qlphase:-.25,qlpick:prod,qobs:human,qphase:-.25,qpick:revise}"
+        ),
     }
     print(json.dumps({"ok": all(checks.values()), "checks": checks}, indent=2))
     return 0 if all(checks.values()) else 1

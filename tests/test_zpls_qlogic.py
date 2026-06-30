@@ -5,6 +5,7 @@ import pytest
 from zpls import (
     QBranch,
     QEdge,
+    QLayer,
     Q_SCALE,
     apply_qgate,
     apply_qgate_to_frame,
@@ -13,12 +14,20 @@ from zpls import (
     explain_qstate,
     format_qedges,
     format_qbranches,
+    format_qlayers,
     make_qframe,
     observe_qstate,
     parse_qedges,
     parse_qbranches,
+    parse_qlayers,
+    q_layer_observation_bucket,
+    q_layer_observation_material,
     q_observation_bucket,
     q_observation_material,
+    qfield_coherence,
+    qfield_tensor,
+    qfield_to_frame,
+    semantic_hash,
     serialize_zpls,
     with_qstate,
     ZplsFrame,
@@ -106,15 +115,99 @@ def test_qframe_encodes_superposition_entanglement_and_observer_in_delta():
     assert "unobserved Q-state" in explain_qstate(frame)
 
 
+def test_qlayers_are_canonical_parallel_world_tokens():
+    layers = [QLayer("sim", 0.55, 0.25), QLayer("prod", 0.45, -0.25)]
+
+    tokens = format_qlayers(layers)
+
+    assert tokens == ["prod@.45/-.25", "sim@.55/.25"]
+    assert parse_qlayers(tokens) == (QLayer("prod", 0.45, -0.25), QLayer("sim", 0.55, 0.25))
+
+
+def test_qfield_tensor_combines_states_and_layers_with_coherence():
+    branches = [QBranch("revise", 0.4, -0.25), QBranch("ship", 0.6)]
+    layers = [QLayer("sim", 0.55, 0.25), QLayer("prod", 0.45, -0.25)]
+
+    tensor = qfield_tensor(branches, layers)
+
+    assert format_qbranches(tensor) == [
+        "prod/revise@.18/-.5",
+        "prod/ship@.27/-.25",
+        "sim/revise@.22",
+        "sim/ship@.33/.25",
+    ]
+    assert qfield_coherence(branches, layers) == 0.1644
+
+
+def test_qfield_to_frame_materializes_tensor_without_observing():
+    frame = make_qframe(
+        agent="planner",
+        state_hash="8f3c",
+        op="plan",
+        target="17",
+        confidence=0.81,
+        risk="med",
+        branches=[QBranch("revise", 0.4, -0.25), QBranch("ship", 0.6)],
+        layers=[QLayer("sim", 0.55, 0.25), QLayer("prod", 0.45, -0.25)],
+        entangled=["critic.17", "coder.17"],
+    )
+
+    tensor_frame = qfield_to_frame(frame)
+
+    assert serialize_zpls(tensor_frame) == (
+        "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+        "Δ{ent:[coder.17,critic.17],"
+        "q:[prod/revise@.18/-.5,prod/ship@.27/-.25,sim/revise@.22,sim/ship@.33/.25],qcoh:.1644}"
+    )
+    assert semantic_hash(tensor_frame) == "fbfe9be78809"
+    assert "coherence=.1644" in explain_qstate(frame)
+
+
+def test_observe_qfield_collapses_state_and_layer_deterministically():
+    frame = make_qframe(
+        agent="planner",
+        state_hash="8f3c",
+        op="plan",
+        target="17",
+        confidence=0.81,
+        risk="med",
+        branches=[QBranch("revise", 0.4, -0.25), QBranch("ship", 0.6)],
+        layers=[QLayer("sim", 0.55, 0.25), QLayer("prod", 0.45, -0.25)],
+        entangled=["critic.17", "coder.17"],
+    )
+
+    observed = observe_qstate(frame, "human")
+
+    assert q_observation_bucket(frame, "human") == 140
+    assert q_layer_observation_bucket(frame, "human") == 3488
+    assert q_layer_observation_material(frame, "human") == (
+        '{"axis":"layer","frame":{"agent":"planner","confidence":0.81,'
+        '"delta":{"ent":["coder.17","critic.17"],"q":["revise@.4/-.25","ship@.6"],'
+        '"ql":["prod@.45/-.25","sim@.55/.25"]},"op":"plan","risk":"med",'
+        '"state_hash":"8f3c","target":"17","version":"S1"},"observer":"human"}'
+    )
+    assert serialize_zpls(observed) == (
+        "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
+        "Δ{ent:[coder.17,critic.17],qlphase:-.25,qlpick:prod,qobs:human,qphase:-.25,qpick:revise}"
+    )
+    assert "collapsed to prod/revise" in explain_qstate(observed)
+
+
 def test_with_qstate_preserves_existing_frame_fields():
     base = ZplsFrame("S1", "critic", "8f3c", "eval", "17", 0.72, "med", {"next": "planner"})
 
-    frame = with_qstate(base, [QBranch("accept", 0.5), QBranch("revise", 0.5)], entangled=["planner.17"])
+    frame = with_qstate(
+        base,
+        [QBranch("accept", 0.5), QBranch("revise", 0.5)],
+        layers=[QLayer("draft", 1.0)],
+        entangled=["planner.17"],
+    )
 
     assert frame.agent == base.agent
     assert frame.op == base.op
     assert frame.delta["next"] == "planner"
     assert frame.delta["q"] == ["accept@.5", "revise@.5"]
+    assert frame.delta["ql"] == ["draft@1"]
     assert frame.delta["ent"] == ["planner.17"]
 
 
@@ -188,6 +281,19 @@ def test_invalid_qbranch_sets_fail_closed(branches):
 def test_invalid_qbranch_tokens_fail_closed(token):
     with pytest.raises(ValueError):
         parse_qbranches([token])
+
+
+@pytest.mark.parametrize(
+    "layers",
+    [
+        [],
+        [QLayer("sim", 0.2), QLayer("prod", 0.3)],
+        [QLayer("sim", 0.5), QLayer("sim", 0.5)],
+    ],
+)
+def test_invalid_qlayer_sets_fail_closed(layers):
+    with pytest.raises(ValueError):
+        format_qlayers(layers)
 
 
 def test_observe_requires_q_superposition():

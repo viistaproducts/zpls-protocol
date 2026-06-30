@@ -6,9 +6,10 @@ ZPL-S is a protocol kernel for compact AI-to-AI and machine-to-machine
 coordination. Instead of exchanging natural-language
 instructions as the primary machine interface, systems exchange canonical state
 frames with operation, target, confidence, risk and delta semantics. The
-protocol adds a quantum-inspired Q-Matrix overlay for representing multiple
-candidate machine states, a deterministic observation function, HMAC-based
-integrity seals, and an HTTP-compatible Internet-Fabric envelope.
+protocol adds a quantum-inspired Q-Matrix/Q-Field overlay for representing
+multiple candidate machine states across layer superpositions, a deterministic
+observation function, HMAC-based integrity seals, and an HTTP-compatible
+Internet-Fabric envelope.
 
 ## Problem
 
@@ -41,6 +42,12 @@ The Q-Matrix overlay represents a sparse state vector:
 q = [(ref_i, weight_i, phase_i)]
 ```
 
+A Q-Field can additionally carry a sparse layer vector:
+
+```text
+ql = [(layer_k, weight_k, phase_k)]
+```
+
 Weights are normalized on a fixed Q4 scale:
 
 ```text
@@ -55,7 +62,14 @@ src=dst@gain[/phase_shift]
 ```
 
 Contributions to the same destination interfere through phase coherence and are
-renormalized. Observation is deterministic:
+renormalized. A state vector and layer vector can also be expanded as a tensor
+field:
+
+```text
+layer/state @ round(layer_weight * state_weight / Q)
+```
+
+Observation is deterministic:
 
 ```text
 bucket = floor(first64bits(sha256(canonical_frame + observer)) * Q / 2^64)
@@ -94,14 +108,14 @@ The Python implementation includes:
 - canonical serializer,
 - binary codec,
 - semantic hash,
-- Q-Matrix,
+- Q-Matrix and Q-Field tensor logic,
 - HMAC seal,
 - Mesh kernel,
 - HTTP server,
 - Internet-Fabric gateway,
 - CLI,
 - conformance vectors,
-- 99 automated tests.
+- 108 automated tests.
 
 The exact number may change as the test suite grows; `zpls conformance` is the
 stable compatibility signal.

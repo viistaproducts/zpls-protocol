@@ -30,10 +30,11 @@ delta-basierte und q-matrix-faehige Zustandsframes.
 8. Maschinenzustand darf unbeobachtet in mehreren Zustaenden bleiben.
 9. Beobachtung ist ein explizites Protokollereignis.
 10. Interferenz ist eine deterministische Matrixoperation, kein Zufall.
-11. Maschinenframes muessen bei Bedarf gesiegelt und pruefbar sein.
-12. Fremde Knoten muessen ihre Faehigkeiten aushandeln, bevor sie Zustandsframes
+11. Layer koennen selbst Superpositionen sein und mit States Tensorfelder bilden.
+12. Maschinenframes muessen bei Bedarf gesiegelt und pruefbar sein.
+13. Fremde Knoten muessen ihre Faehigkeiten aushandeln, bevor sie Zustandsframes
     austauschen.
-13. Jede Entscheidung muss fuer Menschen erklaerbar sein.
+14. Jede Entscheidung muss fuer Menschen erklaerbar sein.
 
 ## Die Acht Schichten
 
@@ -43,8 +44,9 @@ delta-basierte und q-matrix-faehige Zustandsframes.
    kompakte LLM-, Debug- und Log-Repraesentation.
 3. Binaerframe:
    kompakter Maschinentransport.
-4. Q-Matrix:
-   Superposition, Phase, Verschraenkungsreferenzen und Beobachtung.
+4. Q-Matrix / Q-Field:
+   Superposition, Phase, Layer-Felder, Tensorprodukt,
+   Verschraenkungsreferenzen und Beobachtung.
 5. Sparse Gate Matrix:
    neuronale/wellenartige Uebergaenge zwischen Layern oder Parallelwelten.
 6. Mesh-Kernel:
@@ -73,11 +75,21 @@ Die Matrix projiziert den Zustand aus Layer `u0` nach Layer `u1`.
 Beitraege auf dasselbe Ziel interferieren ueber ihre Phasen. Danach wird wieder
 auf einen Q4-normalisierten Zustandsvektor normiert.
 
+Ein Q-Field kann zusaetzlich Layer als eigene Superposition tragen:
+
+```text
+ql:[prod@.45/-.25,sim@.55/.25]
+```
+
+Das Tensorprodukt aus `q` und `ql` macht parallele Arbeitswelten als kompakte,
+hashbare Maschinenmatrix sichtbar.
+
 ## Ziele
 
 - Text- und Binaerframes muessen kanonisch rundreisen.
 - Semantische Hashes muessen stabil sein.
 - Q-Zustaende muessen vor und nach Beobachtung replaybar sein.
+- Q-Fields muessen State- und Layerachsen deterministisch tensorisieren koennen.
 - Q-Gates muessen mit fester Q4-Integerarithmetik berechenbar sein.
 - Ein minimaler Mesh-Kernel muss Frames real an Agent-Inboxes routen koennen.
 - Die CLI muss Validierung, Conformance, Q-Gates, Beobachtung und Mesh-Demo
@@ -92,7 +104,7 @@ auf einen Q4-normalisierten Zustandsvektor normiert.
 ## Roadmap
 
 1. S1 Parser, Serializer, binaerer MVP, Hash und Erklaerung.
-2. Q-Matrix mit Superposition, Phase, Verschraenkung und Beobachtung.
+2. Q-Matrix/Q-Field mit Superposition, Layern, Phase, Verschraenkung und Beobachtung.
 3. Sparse Gate Matrix fuer Layer, Interferenz und neuralartige Uebergaenge.
 4. CLI und Mesh-Kernel als greifbare Referenzausfuehrung.
 5. HMAC-Sealing und Mesh-Policy fuer Integritaet.
