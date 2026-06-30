@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zpls-protocol"
+version = "0.1.0"
+description = "ZPL-S: kompaktes Zustands- und Internet-Fabric-Protokoll fuer KI-zu-KI-Kommunikation"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "ZPL-S Project" }]
+dependencies = []
+license = "Apache-2.0"
+keywords = ["ai-agents", "protocol", "multi-agent", "machine-to-machine", "quantum-inspired"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Networking",
+]
+
+[project.scripts]
+zpls = "zpls.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

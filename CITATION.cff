@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+title: "ZPL-S Protocol"
+message: "If you use ZPL-S in research, prototypes, or infrastructure work, please cite this repository."
+type: software
+authors:
+  - name: "ZPL-S Project"
+version: "0.1.0"
+date-released: "2026-06-30"
+repository-code: "https://github.com/viistaproducts/zpls-protocol"
+abstract: "Experimental AI-machine internet protocol with canonical state frames, Q-matrix logic, HMAC seals, HTTP Fabric and conformance tests."
+license: "Apache-2.0"
