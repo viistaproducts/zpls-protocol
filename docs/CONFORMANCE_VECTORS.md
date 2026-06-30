@@ -204,6 +204,12 @@ Receipt:
 {"accepted":true,"destination":"worker.example","frame_hash":"4a66dcefb21e","reason":"delivered","receiver":"worker","source":"planner.example","trace_id":"trace.demo"}
 ```
 
+Replay-Receipt fuer dasselbe Envelope im selben Gateway:
+
+```json
+{"accepted":false,"destination":"worker.example","frame_hash":"4a66dcefb21e","reason":"replay","receiver":null,"source":"planner.example","trace_id":"trace.demo"}
+```
+
 ## Vektor 6: CLI/Mesh-Mindestverhalten
 
 Der Befehl

@@ -6,7 +6,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
-from zpls.fabric import PeerKeyring, ZplsInternetGateway, ZplsNodeDescriptor, parse_fabric_envelope
+from zpls.fabric import PeerKeyring, ReplayCache, ZplsInternetGateway, ZplsNodeDescriptor, parse_fabric_envelope
 from zpls.frame import parse_zpls, semantic_hash, serialize_zpls
 
 
@@ -18,6 +18,8 @@ class ZplsHttpServerConfig:
     outbound_seal_key: str | bytes | None = None
     outbound_seal_key_id: str = "mesh"
     max_body_bytes: int = 1_048_576
+    replay_cache: ReplayCache | None = None
+    reject_replay: bool = True
 
     def __post_init__(self) -> None:
         if isinstance(self.max_body_bytes, bool) or not isinstance(self.max_body_bytes, int):
@@ -27,7 +29,14 @@ class ZplsHttpServerConfig:
 
 
 def make_zpls_http_handler(config: ZplsHttpServerConfig) -> type[BaseHTTPRequestHandler]:
-    gateway = ZplsInternetGateway(config.descriptor, keyring=config.keyring, require_seal=config.require_seal)
+    replay_cache = config.replay_cache if config.replay_cache is not None else ReplayCache()
+    gateway = ZplsInternetGateway(
+        config.descriptor,
+        keyring=config.keyring,
+        require_seal=config.require_seal,
+        replay_cache=replay_cache,
+        reject_replay=config.reject_replay,
+    )
 
     class ZplsHttpHandler(BaseHTTPRequestHandler):
         server_version = "ZPLSHTTP/0.1"

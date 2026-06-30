@@ -80,6 +80,32 @@ def test_http_server_receives_signed_fabric_envelope():
     assert receipt["receiver"] == "worker"
 
 
+def test_http_server_rejects_replayed_fabric_envelope():
+    planner = ZplsNodeDescriptor("planner.example", "https://planner.example/zpls", roles=("planner",))
+    worker = ZplsNodeDescriptor("worker.example", "https://worker.example/zpls", roles=("worker",))
+    frame = parse_zpls("§S1 a:planner sh:8f3c op:plan t:17 c:.91 r:low Δ{next:worker}")
+    created_at = int(time.time())
+    envelope = ZplsInternetGateway(planner, require_seal=False).pack(
+        frame,
+        destination="worker.example",
+        trace_id="trace.replay",
+        created_at=created_at,
+        ttl=60,
+        seal_key="mesh-secret",
+    )
+    config = ZplsHttpServerConfig(worker, PeerKeyring({"mesh": "mesh-secret"}))
+
+    with _running_server(config) as base:
+        first_status, first_receipt = _post(f"{base}/fabric/receive", envelope.to_json())
+        second_status, second_receipt = _post(f"{base}/fabric/receive", envelope.to_json())
+
+    assert first_status == 202
+    assert first_receipt["accepted"] is True
+    assert second_status == 400
+    assert second_receipt["accepted"] is False
+    assert second_receipt["reason"] == "replay"
+
+
 def test_http_server_rejects_unsigned_when_required():
     planner = ZplsNodeDescriptor("planner.example", "https://planner.example/zpls", roles=("planner",))
     worker = ZplsNodeDescriptor("worker.example", "https://worker.example/zpls", roles=("worker",))

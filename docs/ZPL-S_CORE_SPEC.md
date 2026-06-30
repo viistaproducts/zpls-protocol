@@ -238,6 +238,9 @@ Normative Regeln:
 - `created_at + ttl` begrenzt die Gueltigkeit.
 - `destination` muss zur lokalen Node-ID passen oder `*` sein.
 - Wenn `require_seal` gilt, muss das Frame ein gueltiges `seal` tragen.
+- Ein Gateway mit Replay-Schutz muss `source + trace_id + frame_hash` bis zum
+  Ende der Envelope-Gueltigkeit merken und identische Wiederholungen mit
+  `reason:"replay"` ablehnen.
 - Der Gateway prueft das externe Seal, entfernt es fuer lokales Routing und
   quittiert trotzdem den Hash des urspruenglichen Envelopes.
 - `trace_id` bleibt ueber Knoten hinweg stabil.

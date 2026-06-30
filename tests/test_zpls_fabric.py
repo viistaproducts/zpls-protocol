@@ -6,6 +6,7 @@ import pytest
 
 from zpls import (
     PeerKeyring,
+    ReplayCache,
     ZplsInternetGateway,
     ZplsNodeDescriptor,
     negotiate_capabilities,
@@ -75,6 +76,81 @@ def test_gateway_packs_signed_envelope_and_receiver_routes_it():
     assert receipt.reason == "delivered"
     assert receipt.receiver == "worker"
     assert len(inbox.mesh.inbox("worker")) == 1
+
+
+def test_gateway_rejects_replayed_envelope_with_same_trace_and_hash():
+    planner = ZplsNodeDescriptor("planner.example", "https://planner.example/zpls", roles=("planner",))
+    worker = ZplsNodeDescriptor("worker.example", "https://worker.example/zpls", roles=("worker",))
+    outbox = ZplsInternetGateway(planner, require_seal=False)
+    inbox = ZplsInternetGateway(worker, keyring=PeerKeyring({"mesh": "mesh-secret"}), require_seal=True)
+    frame = parse_zpls("§S1 a:planner sh:8f3c op:plan t:17 c:.91 r:low Δ{next:worker}")
+    envelope = outbox.pack(
+        frame,
+        destination="worker.example",
+        trace_id="trace.replay",
+        created_at=1,
+        ttl=60,
+        seal_key="mesh-secret",
+    )
+
+    first = inbox.receive(envelope, now=2)
+    second = inbox.receive(envelope, now=2)
+
+    assert first.accepted is True
+    assert second.accepted is False
+    assert second.reason == "replay"
+    assert len(inbox.mesh.inbox("worker")) == 1
+
+
+def test_gateway_uses_injected_replay_cache_instance():
+    planner = ZplsNodeDescriptor("planner.example", "https://planner.example/zpls", roles=("planner",))
+    worker = ZplsNodeDescriptor("worker.example", "https://worker.example/zpls", roles=("worker",))
+    cache = ReplayCache(max_entries=2)
+    outbox = ZplsInternetGateway(planner, require_seal=False)
+    inbox = ZplsInternetGateway(
+        worker,
+        keyring=PeerKeyring({"mesh": "mesh-secret"}),
+        require_seal=True,
+        replay_cache=cache,
+    )
+    frame = parse_zpls("§S1 a:planner sh:8f3c op:plan t:17 c:.91 r:low Δ{next:worker}")
+    envelope = outbox.pack(
+        frame,
+        destination="worker.example",
+        trace_id="trace.shared-cache",
+        created_at=1,
+        ttl=60,
+        seal_key="mesh-secret",
+    )
+
+    assert len(cache) == 0
+    assert inbox.receive(envelope, now=2).accepted is True
+    assert len(cache) == 1
+
+
+def test_replay_cache_can_be_disabled_for_compatibility():
+    planner = ZplsNodeDescriptor("planner.example", "https://planner.example/zpls", roles=("planner",))
+    worker = ZplsNodeDescriptor("worker.example", "https://worker.example/zpls", roles=("worker",))
+    outbox = ZplsInternetGateway(planner, require_seal=False)
+    inbox = ZplsInternetGateway(
+        worker,
+        keyring=PeerKeyring({"mesh": "mesh-secret"}),
+        require_seal=True,
+        replay_cache=ReplayCache(max_entries=2),
+        reject_replay=False,
+    )
+    frame = parse_zpls("§S1 a:planner sh:8f3c op:plan t:17 c:.91 r:low Δ{next:worker}")
+    envelope = outbox.pack(
+        frame,
+        destination="worker.example",
+        trace_id="trace.compat",
+        created_at=1,
+        ttl=60,
+        seal_key="mesh-secret",
+    )
+
+    assert inbox.receive(envelope, now=2).accepted is True
+    assert inbox.receive(envelope, now=2).accepted is True
 
 
 def test_gateway_rejects_unsigned_expired_and_wrong_destination_envelopes():

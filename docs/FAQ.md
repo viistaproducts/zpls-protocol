@@ -27,8 +27,8 @@ canonical and designed for machine-state deltas. JSON alone does not define:
 
 It has integrity primitives: HMAC-SHA256 seals, frame hashes, TTL checks and
 closed validation failures. It is not yet independently security-audited and
-does not yet provide encryption, public-key identity, replay cache or key
-rotation.
+does not yet provide encryption, public-key identity, key rotation or a
+distributed replay cache for multi-node clusters.
 
 ## Who Is It For?
 
@@ -51,7 +51,7 @@ zpls serve --node-id worker.local --endpoint http://127.0.0.1:8787/.well-known/z
 
 - public-key signatures,
 - key rotation,
-- replay cache,
+- distributed replay cache,
 - HTTP authentication/rate limits,
 - CBOR/CDDL final binary spec,
 - fuzzing,

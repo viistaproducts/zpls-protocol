@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import threading
 import time
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 from urllib.parse import urlparse
@@ -142,6 +144,41 @@ class FabricReceipt:
         return canonical_json(self.canonical())
 
 
+class ReplayCache:
+    def __init__(self, max_entries: int = 10_000) -> None:
+        if isinstance(max_entries, bool) or not isinstance(max_entries, int) or max_entries < 1:
+            raise ValueError("max_entries must be a positive integer")
+        self.max_entries = max_entries
+        self._seen: OrderedDict[tuple[str, str, str], int] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def check_and_store(self, envelope: FabricEnvelope, *, now: int) -> bool:
+        key = self.key(envelope)
+        expires_at = envelope.created_at + envelope.ttl
+        with self._lock:
+            self._purge_locked(now)
+            if key in self._seen:
+                return False
+            self._seen[key] = expires_at
+            self._seen.move_to_end(key)
+            while len(self._seen) > self.max_entries:
+                self._seen.popitem(last=False)
+        return True
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._seen)
+
+    @staticmethod
+    def key(envelope: FabricEnvelope) -> tuple[str, str, str]:
+        return (envelope.source, envelope.trace_id, semantic_hash(envelope.frame))
+
+    def _purge_locked(self, now: int) -> None:
+        expired = [key for key, expires_at in self._seen.items() if expires_at < now]
+        for key in expired:
+            del self._seen[key]
+
+
 class PeerKeyring:
     def __init__(self, keys: Mapping[str, str | bytes] | None = None) -> None:
         self._keys: dict[str, str | bytes] = dict(keys or {})
@@ -167,10 +204,14 @@ class ZplsInternetGateway:
         keyring: PeerKeyring | None = None,
         mesh: ZplsMesh | None = None,
         require_seal: bool = True,
+        replay_cache: ReplayCache | None = None,
+        reject_replay: bool = True,
     ) -> None:
         self.descriptor = descriptor
         self.keyring = keyring or PeerKeyring()
         self.require_seal = require_seal
+        self.replay_cache = replay_cache if replay_cache is not None else ReplayCache()
+        self.reject_replay = reject_replay
         self.mesh = mesh or ZplsMesh()
         for role in descriptor.roles:
             if role not in self.mesh.agents:
@@ -209,6 +250,8 @@ class ZplsInternetGateway:
             return self._receipt(envelope, False, "missing seal")
         if SEAL_KEY in envelope.frame.delta and not self.keyring.verify(envelope.frame):
             return self._receipt(envelope, False, "invalid seal")
+        if self.reject_replay and not self.replay_cache.check_and_store(envelope, now=now):
+            return self._receipt(envelope, False, "replay")
         route_frame = strip_zpls_seal(envelope.frame) if SEAL_KEY in envelope.frame.delta else envelope.frame
         event = self.mesh.route(route_frame, sender=None)
         return FabricReceipt(

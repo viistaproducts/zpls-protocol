@@ -8,6 +8,7 @@ ZPL-S currently provides integrity, not confidentiality.
 - Deterministic canonical material before signing.
 - Constant-time MAC comparison via Python `hmac.compare_digest`.
 - Fabric envelope checks for destination, TTL and frame hash.
+- In-process Fabric replay cache keyed by source, trace id and frame hash.
 - Closed failure for malformed frames and invalid seals.
 
 ## What Is Not Yet Audited
@@ -20,7 +21,7 @@ Not yet implemented:
 - Public-key signatures.
 - Key rotation.
 - Revocation.
-- Replay cache.
+- Distributed replay cache for multi-node clusters.
 - Rate limiting.
 - Authentication for HTTP endpoints beyond frame seals.
 - Confidential encryption.

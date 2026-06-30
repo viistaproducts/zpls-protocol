@@ -103,6 +103,7 @@ Die Mathematik dazu steht in [Q_MATRIX_MATH.md](docs/Q_MATRIX_MATH.md).
 - Minimaler Mesh-Kernel mit Agent-Registrierung, Routing, Inbox und Eventlog.
 - Internet-Fabric fuer Discovery, Capability-Negotiation, signierte Envelopes
   und Gateway-Routing zwischen fremden Knoten.
+- Replay-Schutz fuer Fabric-Envelopes anhand von Source, Trace-ID und Frame-Hash.
 - HTTP-Server fuer Discovery, Fabric Receive, Frame Validation und Packaging.
 - Conformance-Vektoren fuer unabhaengige Implementierungen.
 - Tests fuer Roundtrip, Fehlerfaelle, binaere Aequivalenz und Q-Matrix-Logik.

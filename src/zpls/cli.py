@@ -297,16 +297,19 @@ def _cmd_conformance(_args: argparse.Namespace) -> int:
         seal_key="mesh-secret",
         seal_key_id="mesh",
     )
-    fabric_receipt = ZplsInternetGateway(
+    fabric_gateway = ZplsInternetGateway(
         worker,
         keyring=PeerKeyring({"mesh": "mesh-secret"}),
         require_seal=True,
-    ).receive(fabric_envelope, now=2)
+    )
+    fabric_receipt = fabric_gateway.receive(fabric_envelope, now=2)
+    fabric_replay = fabric_gateway.receive(fabric_envelope, now=2)
     checks = {
         "core_text": serialize_zpls(core) == "§S1 a:critic sh:8f3c op:eval t:17 c:.72 r:med Δ{next:revise,risk:+pricing_stale}",
         "core_hash": semantic_hash(core) == "ab45ff627ee8",
         "core_seal": verify_zpls_seal(seal_zpls_frame(core, "mesh-secret", key_id="mesh"), "mesh-secret"),
         "fabric_receipt": fabric_receipt.accepted and fabric_receipt.receiver == "worker",
+        "fabric_replay": not fabric_replay.accepted and fabric_replay.reason == "replay",
         "q_bucket": q_observation_bucket(qframe, "human") == 8738,
         "q_observed": serialize_zpls(observe_qstate(qframe, "human"))
         == "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med Δ{ent:[coder.17,critic.17],qobs:human,qpick:ship}",

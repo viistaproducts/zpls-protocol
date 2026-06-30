@@ -72,11 +72,13 @@ def test_fabric_conformance_vector_5():
         seal_key="mesh-secret",
         seal_key_id="mesh",
     )
-    receipt = ZplsInternetGateway(
+    gateway = ZplsInternetGateway(
         worker,
         keyring=PeerKeyring({"mesh": "mesh-secret"}),
         require_seal=True,
-    ).receive(envelope, now=2)
+    )
+    receipt = gateway.receive(envelope, now=2)
+    replay_receipt = gateway.receive(envelope, now=2)
 
     assert planner.to_json() == (
         '{"endpoint":"https://planner.example/.well-known/zpls.json","fabric_version":"F1",'
@@ -99,6 +101,10 @@ def test_fabric_conformance_vector_5():
     assert receipt.to_json() == (
         '{"accepted":true,"destination":"worker.example","frame_hash":"4a66dcefb21e",'
         '"reason":"delivered","receiver":"worker","source":"planner.example","trace_id":"trace.demo"}'
+    )
+    assert replay_receipt.to_json() == (
+        '{"accepted":false,"destination":"worker.example","frame_hash":"4a66dcefb21e",'
+        '"reason":"replay","receiver":null,"source":"planner.example","trace_id":"trace.demo"}'
     )
 
 

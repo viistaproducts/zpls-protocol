@@ -101,7 +101,7 @@ The Python implementation includes:
 - Internet-Fabric gateway,
 - CLI,
 - conformance vectors,
-- 95+ automated tests.
+- 99 automated tests.
 
 The exact number may change as the test suite grows; `zpls conformance` is the
 stable compatibility signal.
@@ -109,8 +109,8 @@ stable compatibility signal.
 ## Limitations
 
 ZPL-S is not yet a standard and has not received an independent security audit.
-It does not implement public-key identity, encryption, key rotation, replay
-cache or global network governance yet.
+It does not implement public-key identity, encryption, key rotation,
+cluster-wide replay persistence or global network governance yet.
 
 ## Vision
 
