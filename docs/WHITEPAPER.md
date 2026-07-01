@@ -109,13 +109,15 @@ The Python implementation includes:
 - binary codec,
 - semantic hash,
 - Q-Matrix and Q-Field tensor logic,
+- experimental S1.1 Delta Algebra,
 - HMAC seal,
 - Mesh kernel,
 - HTTP server,
 - Internet-Fabric gateway,
 - CLI,
+- killer demo,
 - conformance vectors,
-- 108 automated tests.
+- 124 automated tests.
 
 The exact number may change as the test suite grows; `zpls conformance` is the
 stable compatibility signal.

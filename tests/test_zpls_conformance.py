@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import json
+from pathlib import Path
 
 from zpls import (
     QBranch,
@@ -9,8 +11,11 @@ from zpls import (
     PeerKeyring,
     ZplsInternetGateway,
     ZplsNodeDescriptor,
+    apply_delta_ops,
     apply_qgate_to_frame,
+    canonical_delta_ops,
     canonical_json,
+    delta_material,
     encode_zpls_binary,
     make_qframe,
     negotiate_capabilities,
@@ -18,6 +23,7 @@ from zpls import (
     parse_qbranches,
     parse_qlayers,
     parse_zpls,
+    parse_delta_ops,
     q_layer_observation_bucket,
     q_layer_observation_material,
     q_observation_bucket,
@@ -30,6 +36,8 @@ from zpls import (
     verify_zpls_seal,
     zpls_seal_material,
 )
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_core_conformance_vector_1():
@@ -241,3 +249,15 @@ def test_qfield_conformance_vector_7():
         encode_zpls_binary(observed).hex()
         == "5a504c530101060204386633630231371fa46f7b22656e74223a5b22636f6465722e3137222c226372697469632e3137225d2c22716c7068617365223a2d302e32352c22716c7069636b223a2270726f64222c22716f6273223a2268756d616e222c22717068617365223a2d302e32352c22717069636b223a22726576697365227d"
     )
+
+
+def test_s1_1_delta_conformance_json_vector():
+    data = json.loads((ROOT / "docs" / "conformance_vectors_s1_1.json").read_text(encoding="utf-8"))
+    vector = data["vectors"][0]
+    ops = parse_delta_ops(vector["input_tokens"])
+
+    assert data["version"] == "S1.1-delta-experimental"
+    assert canonical_delta_ops(ops) == vector["canonical_tokens"]
+    assert delta_material(ops) == vector["material"]
+    assert hashlib.sha256(delta_material(ops).encode("utf-8")).hexdigest() == vector["sha256"]
+    assert apply_delta_ops(vector["initial_state"], ops) == vector["output_state"]

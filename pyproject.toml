@@ -4,14 +4,22 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zpls-protocol"
-version = "0.2.0"
-description = "ZPL-S: kompaktes Zustands- und Internet-Fabric-Protokoll fuer KI-zu-KI-Kommunikation"
+version = "0.3.0"
+description = "ZPL-S: compact canonical state-frame protocol for AI agent and machine coordination"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "ZPL-S Project" }]
 dependencies = []
 license = "Apache-2.0"
-keywords = ["ai-agents", "protocol", "multi-agent", "machine-to-machine", "quantum-inspired"]
+keywords = [
+    "ai-agents",
+    "protocol",
+    "multi-agent",
+    "machine-to-machine",
+    "quantum-inspired",
+    "state-machine",
+    "conformance",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

@@ -16,7 +16,10 @@ from zpls import (
     ZplsHttpServerConfig,
     ZplsMesh,
     ZplsNodeDescriptor,
+    apply_delta_ops,
     apply_qgate_to_frame,
+    canonical_delta_ops,
+    delta_material,
     decode_zpls_binary,
     encode_zpls_binary,
     explain_qstate,
@@ -29,6 +32,7 @@ from zpls import (
     parse_qlayers,
     parse_qedges,
     parse_fabric_envelope,
+    parse_delta_ops,
     parse_node_descriptor,
     parse_zpls,
     negotiate_capabilities,
@@ -43,6 +47,7 @@ from zpls import (
     seal_zpls_frame,
     semantic_hash,
     serialize_zpls,
+    split_delta_ops,
     verify_zpls_seal,
     zpls_frame_seal,
     zpls_seal_material,
@@ -110,6 +115,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     p_observe.add_argument("input", nargs="?", help="Q-Frame-Text, sonst stdin")
     p_observe.add_argument("--json", action="store_true", help="Material, Digest und Bucket mit ausgeben")
     p_observe.set_defaults(func=_cmd_observe)
+
+    p_delta_canon = sub.add_parser("delta-canon", help="S1.1 Delta-Operationen kanonisieren")
+    p_delta_canon.add_argument("ops", nargs="*", help="Delta-Ops, kommasepariert oder einzeln; sonst stdin")
+    p_delta_canon.add_argument("--json", action="store_true", help="Tokens plus Hashmaterial als JSON ausgeben")
+    p_delta_canon.set_defaults(func=_cmd_delta_canon)
+
+    p_delta_apply = sub.add_parser("delta-apply", help="S1.1 Delta-Operationen auf JSON-State anwenden")
+    p_delta_apply.add_argument("--state", required=True, help="JSON-Objekt als Ausgangszustand")
+    p_delta_apply.add_argument("ops", nargs="*", help="Delta-Ops, kommasepariert oder einzeln; sonst stdin")
+    p_delta_apply.set_defaults(func=_cmd_delta_apply)
 
     p_conf = sub.add_parser("conformance", help="Eingebaute Conformance-Vektoren pruefen")
     p_conf.set_defaults(func=_cmd_conformance)
@@ -325,6 +340,46 @@ def _cmd_observe(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_delta_canon(args: argparse.Namespace) -> int:
+    ops = parse_delta_ops(_read_delta_tokens(args.ops))
+    tokens = canonical_delta_ops(ops)
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "tokens": tokens,
+                    "material": delta_material(ops),
+                    "sha256": hashlib.sha256(delta_material(ops).encode("utf-8")).hexdigest(),
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+    else:
+        print(",".join(tokens))
+    return 0
+
+
+def _cmd_delta_apply(args: argparse.Namespace) -> int:
+    try:
+        state = json.loads(args.state)
+    except json.JSONDecodeError as exc:
+        raise ValueError("state must be JSON") from exc
+    if not isinstance(state, dict):
+        raise ValueError("state must be a JSON object")
+    out = apply_delta_ops(state, parse_delta_ops(_read_delta_tokens(args.ops)))
+    print(json.dumps(out, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+    return 0
+
+
+def _read_delta_tokens(values: Sequence[str]) -> list[str]:
+    raw = list(values) if values else [sys.stdin.read()]
+    tokens = split_delta_ops(raw)
+    if not tokens:
+        raise ValueError("at least one delta operation is required")
+    return tokens
+
+
 def _cmd_conformance(_args: argparse.Namespace) -> int:
     core = parse_zpls("§S1 a:critic sh:8f3c op:eval t:17 c:.72 r:med Δ{risk:+pricing_stale,next:revise}")
     qframe = make_qframe(
@@ -369,6 +424,15 @@ def _cmd_conformance(_args: argparse.Namespace) -> int:
     )
     fabric_receipt = fabric_gateway.receive(fabric_envelope, now=2)
     fabric_replay = fabric_gateway.receive(fabric_envelope, now=2)
+    delta_ops = parse_delta_ops(
+        [
+            "?source.price_feed",
+            "~next=revise_pricing",
+            "!market.pricing",
+            "+risk.pricing_stale=true",
+        ]
+    )
+    delta_out = apply_delta_ops({"market": {"pricing": "stale"}, "next": "ship", "risk": {}}, delta_ops)
     checks = {
         "core_text": serialize_zpls(core) == "§S1 a:critic sh:8f3c op:eval t:17 c:.72 r:med Δ{next:revise,risk:+pricing_stale}",
         "core_hash": semantic_hash(core) == "ab45ff627ee8",
@@ -389,6 +453,21 @@ def _cmd_conformance(_args: argparse.Namespace) -> int:
             "§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med "
             "Δ{ent:[coder.17,critic.17],qlphase:-.25,qlpick:prod,qobs:human,qphase:-.25,qpick:revise}"
         ),
+        "delta_s1_1": canonical_delta_ops(delta_ops)
+        == [
+            "!market.pricing",
+            "~next=revise_pricing",
+            "+risk.pricing_stale=true",
+            "?source.price_feed",
+        ]
+        and delta_out
+        == {
+            "market": {"pricing": "stale"},
+            "next": "revise_pricing",
+            "risk": {"pricing_stale": True},
+            "_invalid": {"market.pricing": True},
+            "_needs": {"source.price_feed": True},
+        },
     }
     print(json.dumps({"ok": all(checks.values()), "checks": checks}, indent=2))
     return 0 if all(checks.values()) else 1

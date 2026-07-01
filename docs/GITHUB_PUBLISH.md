@@ -30,8 +30,8 @@ I built a protocol kernel for the AI-machine internet.
 
 ZPL-S lets agents exchange verifiable machine state instead of long prose:
 canonical frames, semantic hashes, Q-state vectors, layer/state tensor fields,
-deterministic observation, HMAC seals, an HTTP Fabric gateway and conformance
-vectors.
+experimental S1.1 delta operations, deterministic observation, HMAC seals, an
+HTTP Fabric gateway and conformance vectors.
 
 It is not AGI and not quantum-computing hype. It is a runnable protocol layer:
 `zpls conformance`, `zpls fabric-demo`, `zpls serve`.

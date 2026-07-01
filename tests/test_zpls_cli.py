@@ -127,6 +127,43 @@ def test_cli_qfield_flow(capsys):
     )
 
 
+def test_cli_delta_canon_and_apply_flow(capsys):
+    assert (
+        main(
+            [
+                "delta-canon",
+                "?source.price_feed",
+                "~next=revise_pricing",
+                "!market.pricing",
+                "+risk.pricing_stale=true",
+            ]
+        )
+        == 0
+    )
+    assert capsys.readouterr().out.strip() == (
+        "!market.pricing,~next=revise_pricing,+risk.pricing_stale=true,?source.price_feed"
+    )
+
+    assert (
+        main(
+            [
+                "delta-apply",
+                "--state",
+                '{"market":{"pricing":"stale"},"next":"ship","risk":{}}',
+                "!market.pricing,+risk.pricing_stale=true,~next=revise_pricing,?source.price_feed",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out) == {
+        "_invalid": {"market.pricing": True},
+        "_needs": {"source.price_feed": True},
+        "market": {"pricing": "stale"},
+        "next": "revise_pricing",
+        "risk": {"pricing_stale": True},
+    }
+
+
 def test_cli_validate_failure_returns_nonzero(capsys):
     assert main(["validate", "not-a-frame"]) == 1
 

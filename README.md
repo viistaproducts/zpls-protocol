@@ -12,6 +12,15 @@ ZPL-S ist ein kompaktes, deterministisches Protokoll fuer die Kommunikation
 zwischen KI-Systemen, Agenten und Maschinen. Es ist keine Chat-Sprache.
 Menschen bekommen Erklaerung, Maschinen bekommen Zustandsframes.
 
+Use ZPL-S when AI agents need to exchange compact, replayable, auditable state
+transitions instead of copying long chat context.
+
+Good for: multi-agent handoffs, risk gates, deterministic replay, signed
+machine-state envelopes and HTTP gateway exchange.
+
+Not for: human chat, prompt templates, general-purpose private JSON payloads or
+claims about real quantum computing.
+
 Die Grundidee:
 
 ```text
@@ -23,6 +32,26 @@ Ein normaler Frame sieht so aus:
 
 ```text
 §S1 a:critic sh:8f3c op:eval t:17 c:.72 r:med Δ{next:revise,risk:+pricing_stale}
+```
+
+## Use Cases
+
+- Planner -> coder -> critic handoff.
+- Safety/risk gate before shipping or triggering tools.
+- Compact state updates between agents, robots, jobs or services.
+- Audit log for why a route changed.
+- Signed HTTP Fabric envelope between external nodes.
+- Deterministic replay of an agent decision.
+
+Chat JSON is verbose, ambiguous, hard to hash and hard to replay. ZPL-S is
+compact, canonical, hashable, signable and replayable.
+
+```json
+{"message":"Pricing looks stale. Do not ship yet. Revise pricing...","history":["..."]}
+```
+
+```text
+§S1 a:critic sh:8f3c op:eval t:17 c:.72 r:med Δ{next:revise_pricing,risk:+pricing_stale}
 ```
 
 ## Was Neu Daran Ist
@@ -128,9 +157,23 @@ Die Mathematik dazu steht in [Q_MATRIX_MATH.md](docs/Q_MATRIX_MATH.md).
 python3.12 -m venv .venv  # oder eine andere Python-Version >= 3.11
 source .venv/bin/activate
 python -m pip install --upgrade pip
+pip install -e .
+zpls validate '§S1 a:critic sh:8f3c op:eval t:17 c:.72 r:med Δ{next:revise,risk:+pricing_stale}'
+zpls fabric-demo
+```
+
+Verify implementation:
+
+```bash
 pip install -e ".[dev]"
 pytest -q
 zpls conformance
+```
+
+Want the point in one command?
+
+```bash
+python examples/killer_demo.py
 ```
 
 ## CLI Als Greifbarer Einstieg
@@ -170,6 +213,13 @@ zpls qfield \
 zpls observe \
   --observer human --json \
   '§S1 a:planner sh:8f3c op:plan t:17 c:.81 r:med Δ{q:[u1/x@.6667/.25,u1/y@.3333]}'
+
+zpls delta-canon \
+  '!market.pricing' '+risk.pricing_stale=true' '~next=revise_pricing' '?source.price_feed'
+
+zpls delta-apply \
+  --state '{"market":{"pricing":"stale"},"next":"ship","risk":{}}' \
+  '!market.pricing,+risk.pricing_stale=true,~next=revise_pricing,?source.price_feed'
 ```
 
 `mesh-demo` startet keinen Server, aber es zeigt die Runtime-Semantik:
@@ -218,6 +268,9 @@ print(format_qbranches(apply_qgate(branches, gate)))
 - [Core-Spezifikation](docs/ZPL-S_CORE_SPEC.md)
 - [Q-Matrix Mathematik](docs/Q_MATRIX_MATH.md)
 - [Conformance-Vektoren](docs/CONFORMANCE_VECTORS.md)
+- [Threat Model](docs/THREAT_MODEL.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Killer Demo](docs/KILLER_DEMO.md)
 - [Manifest](docs/MANIFEST.md)
 - [FAQ](docs/FAQ.md)
 - [Launch Brief](docs/LAUNCH.md)

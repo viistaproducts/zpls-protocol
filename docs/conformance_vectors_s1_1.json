@@ -1,0 +1,44 @@
+{
+  "version": "S1.1-delta-experimental",
+  "vectors": [
+    {
+      "name": "delta-algebra-pricing-stale",
+      "input_tokens": [
+        "?source.price_feed",
+        "~next=revise_pricing",
+        "!market.pricing",
+        "+risk.pricing_stale=true"
+      ],
+      "canonical_tokens": [
+        "!market.pricing",
+        "~next=revise_pricing",
+        "+risk.pricing_stale=true",
+        "?source.price_feed"
+      ],
+      "material": "[\"!market.pricing\",\"~next=revise_pricing\",\"+risk.pricing_stale=true\",\"?source.price_feed\"]",
+      "sha256": "4c9824b6ca62d6bf118b282fd38a4a7ccae1de4c9c5d2396763b620d2db0f9aa",
+      "initial_state": {
+        "market": {
+          "pricing": "stale"
+        },
+        "next": "ship",
+        "risk": {}
+      },
+      "output_state": {
+        "_invalid": {
+          "market.pricing": true
+        },
+        "_needs": {
+          "source.price_feed": true
+        },
+        "market": {
+          "pricing": "stale"
+        },
+        "next": "revise_pricing",
+        "risk": {
+          "pricing_stale": true
+        }
+      }
+    }
+  ]
+}

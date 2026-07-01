@@ -323,3 +323,41 @@ muss ein akzeptiertes Event mit Empfaenger `worker` ausgeben. Das Frame in
 beobachteten Q-Zustand mit `qobs:human` und `qpick:<state>` enthalten. Welcher
 Branch ausgewaehlt wird, ist deterministisch vom vollstaendigen Frame-Material
 abhaengig.
+
+## Vektor 8: S1.1 Delta-Algebra
+
+Maschinenlesbare Vektoren stehen in:
+
+```text
+docs/conformance_vectors_s1_1.json
+```
+
+Der erste Vektor muss diese kanonische Operationen erzeugen:
+
+```text
+!market.pricing,~next=revise_pricing,+risk.pricing_stale=true,?source.price_feed
+```
+
+Material:
+
+```json
+["!market.pricing","~next=revise_pricing","+risk.pricing_stale=true","?source.price_feed"]
+```
+
+SHA-256:
+
+```text
+4c9824b6ca62d6bf118b282fd38a4a7ccae1de4c9c5d2396763b620d2db0f9aa
+```
+
+Angewendet auf:
+
+```json
+{"market":{"pricing":"stale"},"next":"ship","risk":{}}
+```
+
+muss der Zielzustand sein:
+
+```json
+{"_invalid":{"market.pricing":true},"_needs":{"source.price_feed":true},"market":{"pricing":"stale"},"next":"revise_pricing","risk":{"pricing_stale":true}}
+```

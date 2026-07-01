@@ -60,10 +60,19 @@ ZPL-S makes inter-agent communication:
 - testable,
 - bridgeable across HTTP gateways.
 
+Use cases:
+
+- planner -> coder -> critic handoff,
+- safety/risk gate before shipping,
+- compact state updates between agents or machines,
+- audit log for why a route changed,
+- deterministic replay of a decision.
+
 ## Demo Commands
 
 ```bash
 zpls conformance
+python examples/killer_demo.py
 zpls mesh-demo
 zpls fabric-demo
 zpls serve --node-id worker.local --endpoint http://127.0.0.1:8787/.well-known/zpls.json --key mesh-secret
@@ -91,8 +100,9 @@ Do not claim:
 What if AI agents stopped chatting and started exchanging verifiable state?
 
 ZPL-S is a compact protocol for the AI-machine internet:
-canonical frames, Q-state vectors, layer/state tensor fields, deterministic
-observation, HMAC seals, HTTP fabric envelopes and conformance tests.
+canonical frames, Q-state vectors, layer/state tensor fields, S1.1 delta
+operations, deterministic observation, HMAC seals, HTTP fabric envelopes and
+conformance tests.
 
 Not AGI. Not quantum hype. A real protocol kernel you can run today.
 ```

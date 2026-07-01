@@ -24,6 +24,11 @@ canonical and designed for machine-state deltas. JSON alone does not define:
 - HMAC seal material,
 - conformance vectors.
 
+Use ZPL-S if your agents already coordinate work and you need the handoff to be
+deterministic, hashable, signable, replayable and auditable. Stay with ordinary
+JSON if you only need a private app payload and do not need canonical replay or
+protocol conformance.
+
 ## Is It Secure?
 
 It has integrity primitives: HMAC-SHA256 seals, frame hashes, TTL checks and

@@ -357,7 +357,10 @@ Debugging kurze Praefixe zeigen.
 
 ## 10. Delta-Algebra
 
-Vorgesehene S1.1-Deltaoperationen:
+S1.1 Delta-Algebra ist in der Referenzimplementierung als experimenteller
+Apply-/Canonicalization-Layer verfuegbar. S1-Textframes selbst bleiben
+weiterhin `key:value`-basiert; bare Tokens wie `!path` im `Δ{}`-Block sind noch
+nicht Teil der stabilen S1-Parser-Grammatik.
 
 ```text
 +path=value      add
@@ -372,6 +375,25 @@ Beispiel:
 ```text
 Δ{!market.pricing,+risk.pricing_stale,~next=revise_pricing,?source.price_feed}
 ```
+
+CLI:
+
+```bash
+zpls delta-canon '!market.pricing' '+risk.pricing_stale=true' '~next=revise_pricing' '?source.price_feed'
+zpls delta-apply --state '{"market":{"pricing":"stale"},"next":"ship","risk":{}}' \
+  '!market.pricing,+risk.pricing_stale=true,~next=revise_pricing,?source.price_feed'
+```
+
+Normative experimentelle Regeln:
+
+- `+path=value` fuegt einen Wert hinzu und scheitert, wenn der Pfad existiert.
+- `~path=value` ersetzt einen Wert und scheitert, wenn der Pfad fehlt.
+- `-path` entfernt einen Wert und scheitert, wenn der Pfad fehlt.
+- `!path` markiert `_invalid[path] = true`.
+- `?path` markiert `_needs[path] = true`.
+- Pfade sind punktseparierte ASCII-Identifier.
+- Kanonische Sortierung erfolgt nach Pfad, dann Operation, dann Token.
+- Maschinenlesbare Vektoren stehen in `docs/conformance_vectors_s1_1.json`.
 
 ## 11. Sicherheit
 

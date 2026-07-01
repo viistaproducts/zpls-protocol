@@ -4,7 +4,7 @@ message: "If you use ZPL-S in research, prototypes, or infrastructure work, plea
 type: software
 authors:
   - name: "ZPL-S Project"
-version: "0.2.0"
+version: "0.3.0"
 date-released: "2026-06-30"
 repository-code: "https://github.com/viistaproducts/zpls-protocol"
 abstract: "AI-machine internet protocol with canonical state frames, Q-field/Q-matrix logic, HMAC seals, HTTP Fabric and conformance tests."
